@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation = "vertical"
+    android:weightSum="10"
+    tools:context=".MenuActivity">
+
+    <TextView
+        android:text="@string/appName"
+        android:textColor="@color/mainColor"
+        android:textSize="45dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="50dp"
+        android:layout_gravity="center"
+        android:gravity="top"
+        />
+
+    <Button
+        android:id="@+id/seatLookup"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:onClick="onSeatLookupClicked"
+        android:text="@string/seatLookup"
+        android:textSize="20dp"
+        android:layout_gravity="center"
+        android:background="@color/mainColor"
+        />
+
+    <Switch
+        android:id="@+id/reqConsider"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:onClick="onReqConsider"
+        android:text="@string/reqConsider"
+        android:textSize="20dp"
+        android:layout_gravity="center"
+        />
+
+    <Button
+        android:id="@+id/seatInOut"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:onClick="onSeatInOut"
+        android:text="@string/seatInOut"
+        android:textSize="20dp"
+        android:layout_gravity="center"
+        android:background="@color/mainColor"
+        />
+
+    <Button
+        android:id="@+id/setting"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:onClick="onSetting"
+        android:text="@string/setting"
+        android:textSize="20dp"
+        android:layout_gravity="center"
+        android:background="@color/mainColor"
+        />
+
+
+
+</LinearLayout>

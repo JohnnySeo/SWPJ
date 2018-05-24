@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">SWPJ</string>
+    <string name="appName">♡ 배려콘 ♡</string>
+
+    <string name="seatLookup">좌석조회</string>
+    <string name="reqConsider">배려요청</string>
+    <string name="seatInOut">착석 / 퇴석</string>
+    <string name="setting">설정</string>
+
+</resources>

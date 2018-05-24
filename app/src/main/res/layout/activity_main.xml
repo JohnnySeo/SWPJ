@@ -1,0 +1,61 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:weightSum="10"
+        android:gravity="center">
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_weight="8"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center">
+            <EditText
+                android:id="@+id/userId"
+                android:layout_width="match_parent"
+                android:layout_height="75dp"
+                android:textColor="#000"
+                android:textColorHint="#c9c9c9"
+                android:hint="이메일"
+                android:inputType="textEmailAddress"
+                android:textSize="23dp"/>
+            <EditText
+                android:id="@+id/userPwd"
+                android:layout_width="match_parent"
+                android:layout_height="75dp"
+                android:textColor="#000"
+                android:inputType="textPassword"
+                android:textColorHint="#c9c9c9"
+                android:hint="비밀번호"
+                android:textSize="23dp"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_weight="2"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center">
+            <Button
+                android:id="@+id/joinBtn"
+                android:layout_width="match_parent"
+                android:layout_height="75dp"
+                android:textColor="#000"
+                android:text="회원가입"/>
+            <Button
+                android:id="@+id/loginBtn"
+                android:layout_width="match_parent"
+                android:layout_height="75dp"
+                android:textColor="#000"
+                android:text="로그인"/>
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>
