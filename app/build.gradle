@@ -19,7 +19,7 @@ android {
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'com.android.support:appcompat-v7:26.1.0'
     implementation 'com.android.support.constraint:constraint-layout:1.1.0'
     testImplementation 'junit:junit:4.12'
@@ -30,6 +30,6 @@ dependencies {
     api 'com.google.code.gson:gson:1.7.2'
     api 'com.squareup.retrofit2:converter-gson:2.0.0-beta4'
     api 'com.squareup.okhttp3:logging-interceptor:3.3.1'
-    api 'com.neovisionaries:nv-bluetooth:1.7'
-    api 'org.altbeacon:android-beacon-library:2+'
+    implementation project(':reco-sdk-android_1.1.4')
+    implementation 'com.android.support:design:26.1.0'
 }

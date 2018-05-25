@@ -111,7 +111,9 @@ public class MainActivity extends Activity {
                             userId.setText("");
                             userPwd.setText("");
                         }
-                    }catch (Exception e) {}
+                    }catch (Exception e) {
+                        e.printStackTrace();
+                    }
                     break;
                 case R.id.joinBtn : // 회원가입 버튼 눌렀을 경우
                     Intent intent=new Intent(MainActivity.this,JoinActivity.class);

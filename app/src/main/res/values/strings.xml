@@ -7,4 +7,10 @@
     <string name="seatInOut">착석 / 퇴석</string>
     <string name="setting">설정</string>
 
+    <string name="location_permission_granted">위치정보 권한이 허용되었습니다. 배려콘서비스 이용이 가능합니다.</string>
+    <string name="location_permission_not_granted">위치정보 권한이 거절되었습니다. 배려콘서비스는 위치정보 권한이 필요합니다.</string>
+    <string name="location_permission_rationale">배려콘서비스는 위치정보 권한이 필요합니다.</string>
+
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
 </resources>
