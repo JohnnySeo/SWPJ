@@ -1,6 +1,7 @@
 package com.example.johnnyseo.swpj;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
@@ -9,10 +10,15 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import org.json.JSONArray;
+import org.json.JSONException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
@@ -23,16 +29,24 @@ public class MainActivity extends Activity {
 
     EditText userId, userPwd;
     Button loginBtn, joinBtn;
+    String output = "";
+    String sendMsg = "";
+    ProgressDialog pd;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+
         setContentView(R.layout.activity_main);
 
         userId = (EditText) findViewById(R.id.userId);
         userPwd = (EditText) findViewById(R.id.userPwd);
         loginBtn = (Button) findViewById(R.id.loginBtn);
         joinBtn = (Button) findViewById(R.id.joinBtn);
+
+
         loginBtn.setOnClickListener(btnListener);
         joinBtn.setOnClickListener(btnListener);
 
@@ -93,11 +107,8 @@ public class MainActivity extends Activity {
                         if(result.equals("true")) {
                             Toast.makeText(MainActivity.this,"로그인",Toast.LENGTH_SHORT).show();
 
-                            /* SharedPreferences*/
-                            SharedPreferences pref= getSharedPreferences("pref", MODE_PRIVATE);
-                            SharedPreferences.Editor editor = pref.edit();
-                            editor.putString("userId",loginid);
-                            editor.commit();
+                            // 로그인한 회원정보 JSON으로 받아오기
+                            new JsonTask().execute("http://203.246.82.142:8080/SWPJ/JSONServer_member.jsp", loginid);
 
                             Intent intent = new Intent(MainActivity.this, MenuActivity.class);
                             startActivity(intent);
@@ -111,6 +122,9 @@ public class MainActivity extends Activity {
                             userId.setText("");
                             userPwd.setText("");
                         }
+
+
+
                     }catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -122,4 +136,97 @@ public class MainActivity extends Activity {
         }
 
     };
+
+    private class JsonTask extends AsyncTask<String, String, String> {
+
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            pd = new ProgressDialog(MainActivity.this);
+            pd.setMessage("Please wait");
+            pd.setCancelable(false);
+            pd.show();
+        }
+
+        protected String doInBackground(String... strings) {
+
+            HttpURLConnection connection = null;
+            BufferedReader reader = null;
+
+            try {
+                URL url = new URL(strings[0]);
+                connection = (HttpURLConnection) url.openConnection();
+
+                connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                connection.setRequestMethod("POST");
+                connection.connect();
+                OutputStreamWriter osw = new OutputStreamWriter(connection.getOutputStream());
+                sendMsg = "userId="+strings[1];
+                osw.write(sendMsg);
+                osw.flush();
+
+                InputStream stream = connection.getInputStream();
+                reader = new BufferedReader(new InputStreamReader(stream));
+                StringBuffer buffer = new StringBuffer();
+
+                String line = "";
+                while ((line = reader.readLine()) != null) {
+                    buffer.append(line+"\n");
+                    Log.d("Response: ", "> " + line);   //here u ll get whole response...... :-)
+                }
+
+                JSONArray json = null;
+                json = new JSONArray(buffer.toString());
+                String testUserId = (String) json.getJSONObject(json.length()-1).get("userId").toString();
+                String testUserName = (String) json.getJSONObject(json.length()-1).get("userName").toString();
+                String testUserPhone = (String) json.getJSONObject(json.length()-1).get("userPhone").toString();
+                Boolean testCertAprvTF = (Boolean)  json.getJSONObject(json.length()-1).get("certAprvTF");
+                Boolean testCertUploadTF = (Boolean) json.getJSONObject(json.length()-1).get("certUploadTF");
+                Log.i("체크", "certAprvTF="+testCertAprvTF);
+
+                /* SharedPreferences*/
+                SharedPreferences pref= getSharedPreferences("pref", MODE_PRIVATE);
+                SharedPreferences.Editor editor = pref.edit();
+                editor.putString("userId",testUserId);
+                editor.putString("userName",testUserName);
+                editor.putString("userPhone",testUserPhone);
+                if (testCertAprvTF==true){
+                    editor.putBoolean("certAprvTF",testCertAprvTF);
+                }
+                if (testCertUploadTF==true){
+                    editor.putBoolean("certUploadTF",testCertUploadTF);
+                }
+                editor.commit();
+
+                return buffer.toString();
+
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            } finally {
+                if (connection != null) {
+                    connection.disconnect();
+                }
+                try {
+                    if (reader != null) {
+                        reader.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+            if (pd.isShowing()){
+                pd.dismiss();
+            }
+        }
+    }
 }

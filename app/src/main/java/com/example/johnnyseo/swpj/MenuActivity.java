@@ -73,9 +73,14 @@ public class MenuActivity extends AppCompatActivity {
     public void onRangingToggleButtonClicked(View v) {
         ToggleButton toggle = (ToggleButton)v;
         if(toggle.isChecked()) {
-            Log.i("MenuActivity", "onRangingToggleButtonClicked off to on");
-            Intent intent = new Intent(this, RecoBackgroundRangingService.class);
-            startService(intent);
+            if(true){ // 좌석상태 = true (사용가능)
+                Log.i("MenuActivity", "onRangingToggleButtonClicked off to on");
+                Intent intent = new Intent(this, RecoBackgroundRangingService.class);
+                startService(intent);
+            } else{ // 좌석상태 = false (사용불가능)
+                stopService(new Intent(this, RecoBackgroundRangingService.class));
+            }
+
         } else {
             Log.i("MenuActivity", "onRangingToggleButtonClicked on to off");
             stopService(new Intent(this, RecoBackgroundRangingService.class));
@@ -85,10 +90,16 @@ public class MenuActivity extends AppCompatActivity {
     public void onSeatInOutToggleButtonClicked(View v) {
         ToggleButton toggle = (ToggleButton)v;
         if(toggle.isChecked()) {
-            Log.i("MenuActivity", "onSeatInOutToggleButtonClicked off to on");
 
-            Intent intent = new Intent(this, RecoBackgroundMonitoringService.class);
-            startService(intent);
+            if(true){ // 좌석상태 = true (사용가능)
+                Log.i("MenuActivity", "onSeatInOutToggleButtonClicked off to on");
+                Intent intent = new Intent(this, RecoBackgroundMonitoringService.class);
+                startService(intent);
+            } else{ // 좌석상태 = false (사용불가능)
+                Log.i("MenuActivity", "onSeatInOutToggleButtonClicked on to off");
+                stopService(new Intent(this, RecoBackgroundMonitoringService.class));
+            }
+
         } else {
             Log.i("MenuActivity", "onSeatInOutToggleButtonClicked on to off");
             stopService(new Intent(this, RecoBackgroundMonitoringService.class));

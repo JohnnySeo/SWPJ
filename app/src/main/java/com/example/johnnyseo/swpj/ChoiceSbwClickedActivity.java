@@ -1,0 +1,13 @@
+package com.example.johnnyseo.swpj;
+
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+
+public class ChoiceSbwClickedActivity extends AppCompatActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_choicesbwclicked);
+    }
+}
