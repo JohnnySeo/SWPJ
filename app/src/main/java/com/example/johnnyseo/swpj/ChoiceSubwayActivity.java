@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -43,6 +44,18 @@ public class ChoiceSubwayActivity extends AppCompatActivity {
         list_itemArrayList = new ArrayList<Listviewitem>();
 
         getApi();
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView parent, View v, int position, long id) {
+                Intent intent = new Intent(getApplicationContext(), ChoiceSbwClickedActivity.class);
+                /* putExtra의 첫 값은 식별 태그, 뒤에는 다음 화면에 넘길 값 */
+                intent.putExtra("bTrainNo","7401");
+                startActivity(intent);
+            }
+        });
+
+
 
     }
 
