@@ -2,7 +2,6 @@ package com.example.johnnyseo.swpj;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -22,7 +21,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 public class ChoiceSbwClickedActivity extends AppCompatActivity {
-    ProgressDialog pd;
     String sendMsg = "";
     String clickedbTrainNo="";
     TextView seatInfo;

@@ -27,10 +27,12 @@ package com.example.johnnyseo.swpj;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.perples.recosdk.RECOBeacon;
 import com.perples.recosdk.RECOBeaconManager;
@@ -41,29 +43,41 @@ import com.perples.recosdk.RECOMonitoringListener;
 import com.perples.recosdk.RECORangingListener;
 import com.perples.recosdk.RECOServiceConnectListener;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Locale;
+import java.util.concurrent.ExecutionException;
 
 /**
  * RECOBackgroundMonitoringService is to monitor regions in the background.
  *
  * RECOBackgroundMonitoringService는 백그라운드에서 monitoring을 수행합니다.
  */
+//TODO 진입, 퇴장시 서버에 상태 바꿔주는 쿼리 작성
 public class RecoBackgroundMonitoringService extends Service implements RECOMonitoringListener, RECOServiceConnectListener, RECORangingListener{
     /**
      * We recommend 1 second for scanning, 10 seconds interval between scanning, and 60 seconds for region expiration time.
      * 1초 스캔, 10초 간격으로 스캔, 60초의 region expiration time은 당사 권장사항입니다.
      */
     private long mScanDuration = 1*1000L;
-    private long mSleepDuration = 10*1000L;
-    private long mRegionExpirationTime = 60*1000L;
+    private long mSleepDuration = 2*1000L;
+
+
+    private long mRegionExpirationTime = 10*1000L;
     private int mNotificationID = 9999;
 
     private RECOBeaconManager mRecoManager;
     private ArrayList<RECOBeaconRegion> mRegions;
+    private String beaconNum = "7401-01";
 
     @Override
     public void onCreate() {
@@ -97,6 +111,7 @@ public class RecoBackgroundMonitoringService extends Service implements RECOMoni
     public void onDestroy() {
         Log.i("BackMonitoringService", "onDestroy()");
         this.tearDown();
+        this.stop(mRegions);
         super.onDestroy();
     }
 
@@ -204,9 +219,13 @@ public class RecoBackgroundMonitoringService extends Service implements RECOMoni
 
         //Get the region and found beacon list in the entered region
 
+       new CustomTask().execute(this.beaconNum,"seatIn");
+
+        Log.i("체크","Enter beaconNum = " + this.beaconNum );
+
 
         Log.i("BackMonitoringService", "didEnterRegion() - " + region.getUniqueIdentifier());
-        this.popupNotification("Inside of " + region.getUniqueIdentifier());
+        this.popupNotification(region.getUniqueIdentifier() + "에 착석처리 완료");
         //Write the code when the device is enter the region
     }
 
@@ -219,9 +238,17 @@ public class RecoBackgroundMonitoringService extends Service implements RECOMoni
          * 최초 실행시, 이 콜백 메소드는 호출되지 않습니다.
          * didDetermineStateForRegion() 콜백 메소드를 통해 region 상태를 확인할 수 있습니다.
          */
+        try {
+            String result  = new CustomTask().execute(beaconNum,"seatOut").get();
+            Log.i("체크","Exit result = "+ result);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
 
         Log.i("BackMonitoringService", "didExitRegion() - " + region.getUniqueIdentifier());
-        this.popupNotification("Outside of " + region.getUniqueIdentifier());
+        this.popupNotification(region.getUniqueIdentifier() + "에 퇴석처리 완료");
         //Write the code when the device is exit the region
     }
 
@@ -235,7 +262,8 @@ public class RecoBackgroundMonitoringService extends Service implements RECOMoni
         Log.i("BackMonitoringService", "popupNotification()");
         String currentTime = new SimpleDateFormat("HH:mm:ss", Locale.KOREA).format(new Date());
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this).setSmallIcon(R.drawable.ic_launcher)
+        NotificationCompat.Builder builder =
+                new NotificationCompat.Builder(this).setSmallIcon(R.drawable.ic_launcher)
                 .setContentTitle(msg + " " + currentTime)
                 .setContentText(msg);
 
@@ -265,6 +293,21 @@ public class RecoBackgroundMonitoringService extends Service implements RECOMoni
         return;
     }
 
+    protected void stop(ArrayList<RECOBeaconRegion> regions) {
+        for(RECOBeaconRegion region : regions) {
+            try {
+                mRecoManager.stopMonitoringForRegion(region);
+                this.didExitRegion(region);
+            } catch (RemoteException e) {
+                Log.i("RecoMonitoringActivity", "Remote Exception");
+                e.printStackTrace();
+            } catch (NullPointerException e) {
+                Log.i("RecoMonitoringActivity", "Null Pointer Exception");
+                e.printStackTrace();
+            }
+        }
+    }
+
     @Override
     public void didRangeBeaconsInRegion(Collection<RECOBeacon> collection, RECOBeaconRegion recoBeaconRegion) {
 
@@ -273,5 +316,41 @@ public class RecoBackgroundMonitoringService extends Service implements RECOMoni
     @Override
     public void rangingBeaconsDidFailForRegion(RECOBeaconRegion recoBeaconRegion, RECOErrorCode recoErrorCode) {
 
+    }
+
+    class CustomTask extends AsyncTask<String, Void, String> {
+        String sendMsg, receiveMsg;
+        @Override
+        protected String doInBackground(String... strings) {
+            try {
+                String str;
+                URL url = new URL("http://203.246.82.142:8080/SWPJ/data.jsp");
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                conn.setRequestMethod("POST");
+                OutputStreamWriter osw = new OutputStreamWriter(conn.getOutputStream());
+                sendMsg = "beaconNum="+strings[0] + "&type=" + strings[1];
+                osw.write(sendMsg);
+                osw.flush();
+                if(conn.getResponseCode() == conn.HTTP_OK) {
+                    InputStreamReader tmp = new InputStreamReader(conn.getInputStream(), "UTF-8");
+                    BufferedReader reader = new BufferedReader(tmp);
+                    StringBuffer buffer = new StringBuffer();
+                    while ((str = reader.readLine()) != null) {
+                        buffer.append(str);
+                    }
+                    receiveMsg = buffer.toString();
+
+                } else {
+                    Log.i("통신 결과", conn.getResponseCode()+"에러");
+                }
+
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return receiveMsg;
+        }
     }
 }

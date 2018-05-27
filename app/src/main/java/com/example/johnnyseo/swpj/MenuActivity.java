@@ -7,8 +7,8 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
@@ -16,17 +16,24 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
-import android.widget.CompoundButton;
-import android.widget.Switch;
-import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.perples.recosdk.RECOBeacon;
-import com.perples.recosdk.RECOBeaconRegion;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
 
 public class MenuActivity extends AppCompatActivity {
 
@@ -46,6 +53,11 @@ public class MenuActivity extends AppCompatActivity {
 
     private View mLayout;
     RECOBeacon recoBeacon;
+
+    String sendMsg = "";
+    String seatInfoTemp="";
+    StringBuffer seatInfoCheck = new StringBuffer();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,21 +99,36 @@ public class MenuActivity extends AppCompatActivity {
         }
     }
 
-    public void onSeatInOutToggleButtonClicked(View v) {
+    public void onSeatInOutToggleButtonClicked(View v) throws InterruptedException {
         ToggleButton toggle = (ToggleButton)v;
         if(toggle.isChecked()) {
+            // 비콘정보 JSON으로 받아오기
+            new MenuActivity.JsonTask().execute("http://203.246.82.142:8080/SWPJ/JSONServer_beacon.jsp", "7401-01");
 
-            if(true){ // 좌석상태 = true (사용가능)
-                Log.i("MenuActivity", "onSeatInOutToggleButtonClicked off to on");
+            // 값 받아오기위해 쓰레드를 잠시 멈춤
+            long s = 2000;
+            Thread.sleep(s);
+
+            Log.i("체크", "JSON실행후 메뉴에서 seatInfoCheck=" + seatInfoCheck.toString());
+
+            if(seatInfoCheck.toString().equals("true")){ // 좌석상태 = true (사용가능)
+                Toast.makeText(MenuActivity.this,"착석처리를 시작합니다.\n착석이 완료되면 알림센터에 표시됩니다.",Toast.LENGTH_SHORT).show();
                 Intent intent = new Intent(this, RecoBackgroundMonitoringService.class);
                 startService(intent);
-            } else{ // 좌석상태 = false (사용불가능)
-                Log.i("MenuActivity", "onSeatInOutToggleButtonClicked on to off");
+
+            } else if (seatInfoCheck.toString().equals("false")){ // 좌석상태 = false (사용불가능)
+                Toast.makeText(MenuActivity.this,"좌석이 이용가능한 상태가 아닙니다.",Toast.LENGTH_SHORT).show();
+                toggle.setChecked(false);
+                stopService(new Intent(this, RecoBackgroundMonitoringService.class));
+
+            }else{
+                Log.i("체크", "버튼클릭후 좌석상태 잘 못받아옴 : "+seatInfoCheck.toString());
                 stopService(new Intent(this, RecoBackgroundMonitoringService.class));
             }
 
+
         } else {
-            Log.i("MenuActivity", "onSeatInOutToggleButtonClicked on to off");
+            Toast.makeText(MenuActivity.this,"퇴석처리되었습니다.",Toast.LENGTH_SHORT).show();
             stopService(new Intent(this, RecoBackgroundMonitoringService.class));
         }
     }
@@ -253,6 +280,94 @@ public class MenuActivity extends AppCompatActivity {
         }
         return false;
     }
+
+    /*===========================================================================================
+                            서버와 통신하여 좌석 상태정보 불러오기
+      ===========================================================================================*/
+    private class JsonTask extends AsyncTask<String, String, String> {
+
+
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+        }
+
+        protected String doInBackground(String... strings) {
+
+            HttpURLConnection connection = null;
+            BufferedReader reader = null;
+            Boolean testSeatInfo = true;
+
+            try {
+                URL url = new URL(strings[0]);
+                connection = (HttpURLConnection) url.openConnection();
+
+                connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                connection.setRequestMethod("POST");
+                connection.connect();
+                OutputStreamWriter osw = new OutputStreamWriter(connection.getOutputStream());
+                sendMsg = "beaconNum="+strings[1];
+                osw.write(sendMsg);
+                osw.flush();
+
+                InputStream stream = connection.getInputStream();
+                reader = new BufferedReader(new InputStreamReader(stream));
+                StringBuffer buffer = new StringBuffer();
+
+                String line = "";
+                while ((line = reader.readLine()) != null) {
+                    buffer.append(line+"\n");
+                    Log.d("Response: ", "> " + line);   //here u ll get whole response...... :-)
+                }
+
+                JSONArray json = null;
+                json = new JSONArray(buffer.toString());
+                Log.i("체크","Json="+json.toString()+", JSonLength = "+json.length());
+
+                testSeatInfo = (Boolean) json.getJSONObject(json.length()-1).get("seatInfo");
+                if(seatInfoCheck.toString().equals("true")||seatInfoCheck.toString().equals("false")){
+
+                }else{
+                    seatInfoCheck.delete(0,seatInfoCheck.length());
+                    seatInfoCheck.append(testSeatInfo);
+                }
+
+                Log.i("체크","try문의 Json에서 받아온 seatInfoCheck="+seatInfoCheck.toString());
+                Log.i("체크","try문의 Json에서 받아온 tsetSeatInfo="+testSeatInfo);
+                return testSeatInfo.toString();
+
+
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            } finally {
+                if (connection != null) {
+                    connection.disconnect();
+                }
+                try {
+                    if (reader != null) {
+                        reader.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            Log.i("체크","finally문의 tsetSeatInfo="+testSeatInfo);
+            return testSeatInfo.toString();
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+            Log.i("체크", "result값="+result);
+
+
+        }
+    }
+
 
 
 }
