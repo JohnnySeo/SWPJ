@@ -38,7 +38,7 @@ public class SettingActivity extends AppCompatActivity {
         } else if (certAprvTF==false && certUploadTF==true){
             info = info + "\n임산부인증 : 인증승인 대기중입니다.";
         } else{
-
+            info = info + "\n임산부인증 : 인증파일을 제출해주세요.";
         }
         memberInfo = (TextView) findViewById(R.id.memberInfo);
         memberInfo.setText(info);
@@ -46,11 +46,14 @@ public class SettingActivity extends AppCompatActivity {
 
     }
 
+
+
     public void onLetmeConfirmClicked (View v){
         Toast.makeText(getApplicationContext(), "인증요청 버튼", Toast.LENGTH_LONG).show();
 
         Intent intent=new Intent(SettingActivity.this,LetMeConfirmActivity.class);
         startActivity(intent);
+        finish();
     }
 
 }

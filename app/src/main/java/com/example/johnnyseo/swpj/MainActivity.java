@@ -187,14 +187,19 @@ public class MainActivity extends Activity {
                 /* SharedPreferences*/
                 SharedPreferences pref= getSharedPreferences("pref", MODE_PRIVATE);
                 SharedPreferences.Editor editor = pref.edit();
+                editor.clear();
                 editor.putString("userId",testUserId);
                 editor.putString("userName",testUserName);
                 editor.putString("userPhone",testUserPhone);
                 if (testCertAprvTF==true){
                     editor.putBoolean("certAprvTF",testCertAprvTF);
+                }else{
+                    editor.putBoolean("certAprvTF",false);
                 }
                 if (testCertUploadTF==true){
                     editor.putBoolean("certUploadTF",testCertUploadTF);
+                }else{
+                    editor.putBoolean("certUploadTF",false);
                 }
                 editor.commit();
 

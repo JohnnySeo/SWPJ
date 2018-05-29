@@ -71,6 +71,9 @@ public class LetMeConfirmActivity extends AppCompatActivity {
                 Uri selectImage = data.getData();
                 uploadImage(selectImage);
                 Toast.makeText(getApplicationContext(), "업로드 완료", Toast.LENGTH_LONG).show();
+                Intent intent = new Intent(LetMeConfirmActivity.this, MenuActivity.class);
+                startActivity(intent);
+                finish();
             }
         }
     }
@@ -97,6 +100,10 @@ public class LetMeConfirmActivity extends AppCompatActivity {
         SharedPreferences pref;
         pref = getSharedPreferences("pref", MODE_PRIVATE);
         String userId = pref.getString("userId",null);
+        SharedPreferences.Editor editor = pref.edit();
+        editor.remove("certUploadTF");
+        editor.putBoolean("certUploadTF",true);
+        editor.commit();
 
         Toast.makeText(getApplicationContext(), "전송완료", Toast.LENGTH_LONG).show();
         MultipartBody.Part body1 = prepareFilePart(userId, uri);

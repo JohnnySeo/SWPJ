@@ -10,7 +10,7 @@
 
     <TextView
         android:id="@+id/howtoUpload"
-        android:text="업로드 방법"
+        android:text="\t\t\t\t\t\t*** 임산부 인증 방법 안내 *** \n\n1. 임신확인서를 카메라로 촬영하거나 \n\t\스캐너로 스캔하여 회원님의 갤러리(사진첩)에 \n\t저장해주세요. \n2. 인증파일 업로드 버튼늘 눌러서 갤러리를 통해 \n\t이미지 파일을 선택해주세요.\n3. 회원님의 신상정보와 일치하는 임산부 인증서 \n\t사진을 업로드해주시면 관리자가 확인하여 \n\t승인해드립니다. \n\n* 임신 확인서는 임신사실을 확인한 병원에서\n\t발급 가능합니다."
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_margin="50dp"

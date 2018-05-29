@@ -27,6 +27,7 @@ package com.example.johnnyseo.swpj;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -221,6 +222,11 @@ public class RecoBackgroundMonitoringService extends Service implements RECOMoni
 
        new CustomTask().execute(this.beaconNum,"seatIn");
 
+        SharedPreferences pref;
+        pref = getSharedPreferences("pref", MODE_PRIVATE);
+        String userId = pref.getString("userId",null);
+        new CustomTask2().execute(userId, this.beaconNum, "seatInTime");
+
         Log.i("체크","Enter beaconNum = " + this.beaconNum );
 
 
@@ -239,7 +245,12 @@ public class RecoBackgroundMonitoringService extends Service implements RECOMoni
          * didDetermineStateForRegion() 콜백 메소드를 통해 region 상태를 확인할 수 있습니다.
          */
         try {
-            String result  = new CustomTask().execute(beaconNum,"seatOut").get();
+            String result  = new CustomTask().execute(this.beaconNum,"seatOut").get();
+
+            SharedPreferences pref;
+            pref = getSharedPreferences("pref", MODE_PRIVATE);
+            String userId = pref.getString("userId",null);
+            new CustomTask2().execute(userId, this.beaconNum, "seatOutTime");
             Log.i("체크","Exit result = "+ result);
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -330,6 +341,42 @@ public class RecoBackgroundMonitoringService extends Service implements RECOMoni
                 conn.setRequestMethod("POST");
                 OutputStreamWriter osw = new OutputStreamWriter(conn.getOutputStream());
                 sendMsg = "beaconNum="+strings[0] + "&type=" + strings[1];
+                osw.write(sendMsg);
+                osw.flush();
+                if(conn.getResponseCode() == conn.HTTP_OK) {
+                    InputStreamReader tmp = new InputStreamReader(conn.getInputStream(), "UTF-8");
+                    BufferedReader reader = new BufferedReader(tmp);
+                    StringBuffer buffer = new StringBuffer();
+                    while ((str = reader.readLine()) != null) {
+                        buffer.append(str);
+                    }
+                    receiveMsg = buffer.toString();
+
+                } else {
+                    Log.i("통신 결과", conn.getResponseCode()+"에러");
+                }
+
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return receiveMsg;
+        }
+    }
+
+    class CustomTask2 extends AsyncTask<String, Void, String> {
+        String sendMsg, receiveMsg;
+        @Override
+        protected String doInBackground(String... strings) {
+            try {
+                String str;
+                URL url = new URL("http://203.246.82.142:8080/SWPJ/data.jsp");
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                conn.setRequestMethod("POST");
+                OutputStreamWriter osw = new OutputStreamWriter(conn.getOutputStream());
+                sendMsg = "userId="+strings[0]+"&beaconNum="+strings[1] + "&type=" + strings[2];
                 osw.write(sendMsg);
                 osw.flush();
                 if(conn.getResponseCode() == conn.HTTP_OK) {
