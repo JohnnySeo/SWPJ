@@ -7,6 +7,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -37,44 +38,51 @@ import java.util.concurrent.ExecutionException;
 
 public class MenuActivity extends AppCompatActivity {
 
+    private static final int REQUEST_ENABLE_BT = 1;
+    private static final int REQUEST_LOCATION = 10;
+    private View mLayout;
+    private BluetoothManager mBluetoothManager;
+    private BluetoothAdapter mBluetoothAdapter;
+    private ToggleButton seatInOuToggleButton;
+
     //This is a default proximity uuid of the RECO
     public static final String RECO_UUID = "24DDF411-8CF1-440C-87CD-E368DAF9C93E";
     public static final boolean SCAN_RECO_ONLY = true;
     public static final boolean ENABLE_BACKGROUND_RANGING_TIMEOUT = true;
     public static final boolean DISCONTINUOUS_SCAN = true;
 
-    private static final int REQUEST_ENABLE_BT = 1;
-    private static final int REQUEST_LOCATION = 10;
 
-    private ArrayList<RECOBeacon> mRangedBeacons;
 
-    private BluetoothManager mBluetoothManager;
-    private BluetoothAdapter mBluetoothAdapter;
-
-    private View mLayout;
     RECOBeacon recoBeacon;
-
+    String beaconNum;
     String sendMsg = "";
-    String seatInfoTemp="";
     StringBuffer seatInfoCheck = new StringBuffer();
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_menu);
-        Intent intent=new Intent(this.getIntent());
 
         mLayout = findViewById(R.id.mainLayout);
         getPermissionforBltth();
 
 
+        Intent intent2 = new Intent(this, RecoBackgroundRangingService.class);
+        startService(intent2);
 
 
+        setContentView(R.layout.activity_menu);
+        Intent intent=new Intent(this.getIntent());
 
     }
 
+    @Override
+    protected void onPostResume() {
+        super.onPostResume();
+        Intent intent2 = new Intent(this, RecoBackgroundRangingService.class);
+        startService(intent2);
 
+    }
 
     public void onSeatLookupClicked(View v){
         Intent intent=new Intent(MenuActivity.this,SeatLookupActivity.class);
@@ -84,6 +92,9 @@ public class MenuActivity extends AppCompatActivity {
 
     public void onRangingToggleButtonClicked(View v) {
         ToggleButton toggle = (ToggleButton)v;
+        SharedPreferences pref= getSharedPreferences("pref", MODE_PRIVATE);
+        beaconNum = pref.getString("beaconNum", null);
+        Log.i("체크", "배려요청클릭 beaconNum = " + beaconNum);
         if(toggle.isChecked()) {
             if(true){ // 좌석상태 = true (사용가능)
                 Log.i("MenuActivity", "onRangingToggleButtonClicked off to on");
@@ -101,9 +112,12 @@ public class MenuActivity extends AppCompatActivity {
 
     public void onSeatInOutToggleButtonClicked(View v) throws InterruptedException {
         ToggleButton toggle = (ToggleButton)v;
+        SharedPreferences pref= getSharedPreferences("pref", MODE_PRIVATE);
+        beaconNum = pref.getString("beaconNum", null);
+        Log.i("체크", "착석퇴석 beaconNum = " + beaconNum);
         if(toggle.isChecked()) {
             // 비콘정보 JSON으로 받아오기
-            new MenuActivity.JsonTask().execute("http://203.246.82.142:8080/SWPJ/JSONServer_beacon.jsp", "7401-01");
+            new MenuActivity.JsonTask().execute("http://203.246.82.142:8080/SWPJ/JSONServer_beacon.jsp", beaconNum);
 
             // 값 받아오기위해 쓰레드를 잠시 멈춤
             long s = 2000;
@@ -111,19 +125,21 @@ public class MenuActivity extends AppCompatActivity {
 
             Log.i("체크", "JSON실행후 메뉴에서 seatInfoCheck=" + seatInfoCheck.toString());
 
-            if(seatInfoCheck.toString().equals("true")){ // 좌석상태 = true (사용가능)
+            if(seatInfoCheck.toString().equals("true") && beaconNum!=null){ // 좌석상태 = true (사용가능)
                 Toast.makeText(MenuActivity.this,"착석처리를 시작합니다.\n착석이 완료되면 알림센터에 표시됩니다.",Toast.LENGTH_SHORT).show();
                 Intent intent = new Intent(this, RecoBackgroundMonitoringService.class);
                 startService(intent);
 
-            } else if (seatInfoCheck.toString().equals("false")){ // 좌석상태 = false (사용불가능)
+            } else if (seatInfoCheck.toString().equals("false") && beaconNum!=null){ // 좌석상태 = false (사용불가능)
                 Toast.makeText(MenuActivity.this,"좌석이 이용가능한 상태가 아닙니다.",Toast.LENGTH_SHORT).show();
                 toggle.setChecked(false);
                 stopService(new Intent(this, RecoBackgroundMonitoringService.class));
 
             }else{
-                Log.i("체크", "버튼클릭후 좌석상태 잘 못받아옴 : "+seatInfoCheck.toString());
+                Log.i("체크", "비콘넘버 못받아옴, beaconNum=" + beaconNum);
+                Toast.makeText(MenuActivity.this,"아직 비콘을 인식하지못했습니다. \n 비콘을 인식하고 다시 시도해주세요.",Toast.LENGTH_SHORT).show();
                 stopService(new Intent(this, RecoBackgroundMonitoringService.class));
+                toggle.setChecked(false);
             }
 
 
@@ -149,9 +165,6 @@ public class MenuActivity extends AppCompatActivity {
     /*=======================================================================
                                 비콘동작에 필요한 메소드
     =========================================================================*/
-
-
-
     //사용자가 블루투스를 켜도록 요청
     public void getPermissionforBltth(){
 
@@ -203,9 +216,26 @@ public class MenuActivity extends AppCompatActivity {
             default :
                 break;
         }
-
-
     }
+
+    private void requestLocationPermission() {
+        if(!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_COARSE_LOCATION)) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, REQUEST_LOCATION);
+            return;
+        }
+
+        Snackbar.make(mLayout, R.string.location_permission_rationale, Snackbar.LENGTH_INDEFINITE)
+                .setAction(R.string.ok, new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        ActivityCompat.requestPermissions(MenuActivity.this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, REQUEST_LOCATION);
+                    }
+                })
+                .show();
+    }
+
+
+
 
     @Override
     protected void onResume() {
@@ -218,7 +248,7 @@ public class MenuActivity extends AppCompatActivity {
 
         if(this.isBackgroundRangingServiceRunning(this)) {
             ToggleButton toggle = (ToggleButton)findViewById(R.id.seatInOuToggleButton);
-            toggle.setChecked(true);
+            toggle.setChecked(false);
         }
     }
 
@@ -245,21 +275,7 @@ public class MenuActivity extends AppCompatActivity {
      * 당사에서는 ACCESS_COARSE_LOCATION 권한을 권장합니다.
      *
      */
-    private void requestLocationPermission() {
-        if(!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_COARSE_LOCATION)) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, REQUEST_LOCATION);
-            return;
-        }
 
-        Snackbar.make(mLayout, R.string.location_permission_rationale, Snackbar.LENGTH_INDEFINITE)
-                .setAction(R.string.ok, new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        ActivityCompat.requestPermissions(MenuActivity.this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, REQUEST_LOCATION);
-                    }
-                })
-                .show();
-    }
 
     private boolean isBackgroundMonitoringServiceRunning(Context context) {
         ActivityManager am = (ActivityManager)context.getSystemService(Context.ACTIVITY_SERVICE);

@@ -25,12 +25,13 @@ package com.example.johnnyseo.swpj;
 
 import android.app.NotificationManager;
 import android.app.Service;
+import android.bluetooth.BluetoothClass;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
-import android.view.Menu;
 
 import com.perples.recosdk.RECOBeacon;
 import com.perples.recosdk.RECOBeaconManager;
@@ -52,18 +53,19 @@ import java.util.Locale;
  *
  * RECOBackgroundMonitoringService는 백그라운드에서 monitoring을 수행하며, 특정 region 내부로 진입한 경우 백그라운드 상태에서 ranging을 수행합니다.
  */
-public class RecoBackgroundRangingService extends Service implements RECORangingListener, RECOMonitoringListener, RECOServiceConnectListener {
+public class RecoBackgroundRangingService extends Service implements RECORangingListener, RECOMonitoringListener, RECOServiceConnectListener{
     /**
      * We recommend 1 second for scanning, 10 seconds interval between scanning, and 60 seconds for region expiration time.
      * 1초 스캔, 10초 간격으로 스캔, 60초의 region expiration time은 당사 권장사항입니다.
      */
     private long mScanDuration = 1*1000L;
-    private long mSleepDuration = 10*1000L;
-    private long mRegionExpirationTime = 60*1000L;
+    private long mSleepDuration = 15*1000L;
+    private long mRegionExpirationTime = 10*1000L;
     private int mNotificationID = 9999;
 
     private RECOBeaconManager mRecoManager;
     private ArrayList<RECOBeaconRegion> mRegions;
+    public StringBuffer beaconId;
 
     @Override
     public void onCreate() {
@@ -230,10 +232,27 @@ public class RecoBackgroundRangingService extends Service implements RECORanging
          * 최초 실행시, 이 콜백 메소드는 호출되지 않습니다.
          * didDetermineStateForRegion() 콜백 메소드를 통해 region 상태를 확인할 수 있습니다.
          */
+        RECOBeacon recoBeacon = (RECOBeacon) beacons.toArray()[0];
+        String major = recoBeacon.getMajor()+"";
+        String minor = recoBeacon.getMinor()+"";
+
+        /* SharedPreferences*/
+        SharedPreferences pref= getSharedPreferences("pref", MODE_PRIVATE);
+        SharedPreferences.Editor editor = pref.edit();
+        editor.putString("beaconNum","hi");
+        editor.remove("beaconNum");
+        editor.remove("major");
+        editor.remove("minor");
+        editor.putString("beaconNum",major + "-0" + minor);
+        editor.putInt("major",recoBeacon.getMajor());
+        editor.putInt("minor",recoBeacon.getMinor());
+        editor.commit();
+
 
         //Get the region and found beacon list in the entered region
-        Log.i("BackRangingService", "didEnterRegion() - " + region.getUniqueIdentifier());
-        this.popupNotification("Inside of " + region.getUniqueIdentifier());
+        Log.i("BackRangingService", "didEnterRegion() - " + region.getUniqueIdentifier() +  " beacons, Major=" + major + ", Minor="+minor);
+        Log.i("BackRangingService", "shared preference, Major-Minor=" + pref.getString("beaconNum",null));
+        this.popupNotification(major + "-0" + minor+ "\n 지금부터 블루투스기능을 사용할수 있습니다.");
         //Write the code when the device is enter the region
 
         this.startRangingWithRegion(region); //start ranging to get beacons inside of the region
@@ -251,7 +270,6 @@ public class RecoBackgroundRangingService extends Service implements RECORanging
          */
 
         Log.i("BackRangingService", "didExitRegion() - " + region.getUniqueIdentifier());
-        this.popupNotification("Outside of " + region.getUniqueIdentifier());
         //Write the code when the device is exit the region
 
         this.stopRangingWithRegion(region); //stop ranging because the device is outside of the region from now
@@ -265,7 +283,8 @@ public class RecoBackgroundRangingService extends Service implements RECORanging
 
     @Override
     public void didRangeBeaconsInRegion(Collection<RECOBeacon> beacons, RECOBeaconRegion region) {
-        Log.i("BackRangingService", "didRangeBeaconsInRegion() - " + region.getUniqueIdentifier() + " with " + beacons.size() + " beacons");
+
+        Log.i("BackRangingService", "didRangeBeaconsInRegion() - " + region.getUniqueIdentifier() + " with " + beacons.size());
         //Write the code when the beacons inside of the region is received
     }
 

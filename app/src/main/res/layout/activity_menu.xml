@@ -43,8 +43,7 @@
             android:id="@+id/rangingToggleButtonLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentStart="true"
-            android:layout_below="@+id/monitoringToggleButtonLabel"
+
             android:text="@string/reqConsider"
             android:textAppearance="?android:attr/textAppearanceMedium" />
 
@@ -52,12 +51,8 @@
             android:id="@+id/backgroundRangingToggleButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignBaseline="@+id/rangingToggleButtonLabel"
-            android:layout_alignBottom="@+id/rangingToggleButtonLabel"
+            android:checked="false"
             android:layout_marginStart="25dp"
-            android:layout_toEndOf="@+id/rangingToggleButtonLabel"
-            android:textOn="ON"
-            android:textOff="OFF"
             android:onClick="onRangingToggleButtonClicked"/>
 
     </LinearLayout>
@@ -81,12 +76,8 @@
             android:id="@+id/seatInOuToggleButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignBaseline="@+id/monitoringToggleButtonLabel"
-            android:layout_alignBottom="@+id/monitoringToggleButtonLabel"
+            android:checked="false"
             android:layout_marginStart="25dp"
-            android:layout_toEndOf="@+id/monitoringToggleButtonLabel"
-            android:textOn="ON"
-            android:textOff="OFF"
             android:onClick="onSeatInOutToggleButtonClicked"/>
 
     </LinearLayout>

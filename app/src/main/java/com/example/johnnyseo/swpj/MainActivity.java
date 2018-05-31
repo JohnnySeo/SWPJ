@@ -1,11 +1,19 @@
 package com.example.johnnyseo.swpj;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -26,6 +34,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 public class MainActivity extends Activity {
+
+
+
 
     EditText userId, userPwd;
     Button loginBtn, joinBtn;
@@ -234,4 +245,6 @@ public class MainActivity extends Activity {
             }
         }
     }
+
+
 }

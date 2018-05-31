@@ -77,13 +77,22 @@ public class RecoBackgroundMonitoringService extends Service implements RECOMoni
     private int mNotificationID = 9999;
 
     private RECOBeaconManager mRecoManager;
+    RECOBeacon recoBeacon;
     private ArrayList<RECOBeaconRegion> mRegions;
-    private String beaconNum = "7401-01";
+    private String beaconNum = "";
+    private int major = 0;
+    private int minor = 0;
+
 
     @Override
     public void onCreate() {
         Log.i("BackMonitoringService", "onCreate()");
         super.onCreate();
+        SharedPreferences pref= getSharedPreferences("pref", MODE_PRIVATE);
+        beaconNum = pref.getString("beaconNum", null);
+        major = pref.getInt("major", 0);
+        minor = pref.getInt("minor", 0);
+
     }
 
     @Override
@@ -101,7 +110,9 @@ public class RecoBackgroundMonitoringService extends Service implements RECOMoni
          * 주의: enableRangingTimeout을 false로 설정 시, 배터리 소모량이 증가합니다.
          */
         mRecoManager = RECOBeaconManager.getInstance(getApplicationContext(), MenuActivity.SCAN_RECO_ONLY, MenuActivity.ENABLE_BACKGROUND_RANGING_TIMEOUT);
+
         this.bindRECOService();
+
         //this should be set to run in the background.
         //background에서 동작하기 위해서는 반드시 실행되어야 합니다.
         return START_STICKY;
@@ -136,12 +147,9 @@ public class RecoBackgroundMonitoringService extends Service implements RECOMoni
         Log.i("BackMonitoringService", "generateBeaconRegion()");
 
         String mProximityUuid = "24DDF411-8CF1-440C-87CD-E368DAF9C93E";
-        // Major값 : 열차번호
-        int mMajor1 = 7401;
-        // Minor값 : 좌석번호
-        int mMinor1 = 1;
+
         // 해당비콘이 표시하는 좌석의 비콘번호 설정
-        RECOBeaconRegion mRecoRegion1 = new RECOBeaconRegion(mProximityUuid, mMajor1, mMinor1, "7401-01");
+        RECOBeaconRegion mRecoRegion1 = new RECOBeaconRegion(mProximityUuid, major, minor, beaconNum);
 
         mRecoRegion1.setRegionExpirationTimeMillis(mRegionExpirationTime);
         mRegions.add(mRecoRegion1);
@@ -321,6 +329,7 @@ public class RecoBackgroundMonitoringService extends Service implements RECOMoni
 
     @Override
     public void didRangeBeaconsInRegion(Collection<RECOBeacon> collection, RECOBeaconRegion recoBeaconRegion) {
+
 
     }
 

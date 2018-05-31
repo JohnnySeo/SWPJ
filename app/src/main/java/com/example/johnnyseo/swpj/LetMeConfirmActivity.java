@@ -71,8 +71,6 @@ public class LetMeConfirmActivity extends AppCompatActivity {
                 Uri selectImage = data.getData();
                 uploadImage(selectImage);
                 Toast.makeText(getApplicationContext(), "업로드 완료", Toast.LENGTH_LONG).show();
-                Intent intent = new Intent(LetMeConfirmActivity.this, MenuActivity.class);
-                startActivity(intent);
                 finish();
             }
         }
